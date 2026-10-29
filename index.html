@@ -4,29 +4,30 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="light" />
-<title>日程工作台</title>
-<meta name="application-name" content="日程工作台" />
-<meta name="theme-color" content="#f1f4f5" />
+<title>工作台</title>
+<meta name="application-name" content="工作台" />
+<meta name="theme-color" content="#e7ebed" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="日程工作台" />
+<meta name="apple-mobile-web-app-title" content="工作台" />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23f1f4f5'/%3E%3Cpolygon points='32,7 54,19.5 54,44.5 32,57 10,44.5 10,19.5' fill='none' stroke='%230e1a22' stroke-width='4'/%3E%3Cpolygon points='32,17 45,24.5 45,39.5 32,47 19,39.5 19,24.5' fill='none' stroke='%231779a4' stroke-width='2.5'/%3E%3Ccircle cx='32' cy='32' r='3' fill='%231779a4'/%3E%3C/svg%3E" />
 <style>
   :root{
-    --paper:#f1f4f5;
+    --paper:#e7ebed;
     --panel:#ffffff;
-    --panel-2:#f7f9fa;
+    --panel-2:#f6f8f9;
     --ink:#0e1a22;
     --ink-2:#3c4e5a;
     --muted:#677883;
-    --line:#d5dee3;
-    --line-strong:#a9bac4;
+    --line:#cfd8dd;
+    --line-strong:#a2b2bc;
     --accent:#1779a4;
-    --accent-soft:#e7f1f6;
+    --accent-soft:#e3f0f5;
     --signal:#d9480f;
     --ok:#0f766e;
+    --leave:#0f7a6b;
 
     --font-ui:"Segoe UI","Microsoft YaHei UI","Microsoft YaHei",system-ui,sans-serif;
     --font-tech:"Bahnschrift","DIN Alternate","Segoe UI","Microsoft YaHei UI",sans-serif;
@@ -68,7 +69,7 @@
     position:sticky;top:0;z-index:30;
     display:flex;align-items:center;gap:20px;
     padding:14px 26px;
-    background:rgba(241,244,245,.93);
+    background:rgba(231,235,237,.93);
     backdrop-filter:blur(8px);
     border-bottom:1px solid var(--line-strong);
   }
@@ -110,6 +111,7 @@
   }
   #search:focus{border-color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent)}
   .top-actions{display:flex;gap:6px;align-items:center}
+  .search-wrap[hidden] + .top-actions{margin-left:auto}
 
   /* ============ 按钮 ============ */
   .btn{
@@ -134,6 +136,7 @@
     background-image:linear-gradient(var(--signal),var(--signal));
   }
   .btn-danger:hover{color:#fff;border-color:var(--signal);background-size:100% 100%}
+  .btn-back{height:28px;padding:0 10px;font-size:11.5px;color:var(--ink-2)}
   .icon-btn{
     width:28px;height:28px;display:grid;place-items:center;
     border:1px solid var(--line);background:var(--panel);color:var(--ink-2);
@@ -199,8 +202,14 @@
   }
   .cal-day .sub.is-holiday{color:var(--signal);font-weight:600}
   .cal-day .sub.is-work{color:var(--accent);font-weight:600}
+  .cal-day .sub.is-leave{color:var(--leave);font-weight:600}
   .cal-day:hover{background:var(--accent-soft)}
   .cal-day.is-other{opacity:.45}
+  .cal-day.has-high .num{color:var(--signal);font-weight:800}
+  .cal-day.has-high::before{
+    content:"";position:absolute;left:0;top:0;width:0;height:0;
+    border-top:7px solid var(--signal);border-right:7px solid transparent;
+  }
   .cal-day.is-today .num{color:var(--accent);font-weight:700}
   .cal-day.is-today::after{
     content:"";position:absolute;top:2px;right:2px;width:4px;height:4px;
@@ -217,6 +226,12 @@
   .cal-day .dots i{width:3px;height:3px;display:block;background:var(--accent)}
   .cal-day .dots .dot-done{background:var(--line-strong) !important}
 
+  .prio-legend{
+    display:flex;align-items:center;gap:12px;
+    padding:8px 2px 0;font-size:9.5px;color:var(--muted);
+  }
+  .prio-legend span{display:flex;align-items:center;gap:4px}
+  .prio-legend i{width:6px;height:6px;display:block}
   .side-stats{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
   .stat-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
   .stat-row .label{font-family:var(--font-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
@@ -299,6 +314,10 @@
   .day-lunar .work-name{
     font-family:var(--font-ui);font-size:10.5px;color:var(--accent);font-weight:600;
     border:1px solid var(--accent);padding:0 5px;line-height:15px;
+  }
+  .day-lunar .leave-name{
+    font-family:var(--font-ui);font-size:10.5px;color:var(--leave);font-weight:600;
+    border:1px solid var(--leave);padding:0 5px;line-height:15px;
   }
   .day-sub .dot-sep,.day-lunar .dot-sep{margin:0 5px;color:var(--line-strong)}
   .day-nav{display:flex;gap:6px}
@@ -441,7 +460,7 @@
   .wch-num{font-family:var(--font-tech);font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
   .week-col.is-today .wch-num,.week-col.is-today .wch-wd{color:var(--accent)}
   .week-list{list-style:none;margin:0;padding:5px;flex:1;display:flex;flex-direction:column;gap:3px}
-  .week-task{display:flex;gap:5px;align-items:flex-start;padding:3px 2px}
+  .week-task{display:flex;gap:5px;align-items:flex-start;padding:3px 2px 3px 8px}
   .week-task.is-done .wt-title{text-decoration:line-through;color:var(--muted)}
   .wt-body{min-width:0;display:flex;flex-direction:column}
   .wt-title{font-size:10.5px;line-height:1.4;word-break:break-word}
@@ -498,12 +517,14 @@
     border:1px solid var(--signal);color:var(--signal);flex:0 0 auto;
   }
   .mc-badge.is-work{border-color:var(--accent);color:var(--accent)}
+  .mc-badge.is-leave{border-color:var(--leave);color:var(--leave)}
   .mc-sub{font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden}
   .mc-sub.is-holiday{color:var(--signal);font-weight:600}
   .mc-tasks{display:flex;flex-direction:column;gap:2px;margin-top:auto;min-height:0}
   .mc-task{
     display:block;font-size:9.5px;line-height:1.55;color:var(--ink-2);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    border-left:2px solid transparent;padding-left:4px;
   }
   .mc-task i{display:inline-block;width:4px;height:4px;margin-right:4px;vertical-align:middle}
   .mc-task.is-done{color:var(--muted);text-decoration:line-through}
@@ -626,6 +647,84 @@
     font-family:var(--font-mono);font-size:10.5px;padding:7px 26px;
   }
 
+  /* ============ 首页 ============ */
+  .screen{max-width:1060px;margin:0 auto;padding:0 24px}
+  .home-wrap{
+    min-height:calc(100vh - 66px);
+    display:flex;flex-direction:column;justify-content:center;
+    padding:40px 0 60px;
+  }
+  .home-hero{text-align:center}
+  .home-hero .overline{margin-bottom:10px}
+  .home-hero h1{
+    font-family:var(--font-tech);font-size:38px;font-weight:600;
+    letter-spacing:.03em;line-height:1.1;
+  }
+  .home-sub{margin-top:10px;font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+  .home-grid{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:14px;margin-top:38px;align-items:stretch}
+  .home-card{
+    position:relative;text-align:left;padding:20px 18px 24px;
+    background:var(--panel);border:1px solid var(--line-strong);
+    cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s;
+  }
+  .home-card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 12px 26px rgba(23,28,50,.10)}
+  .home-card::after{
+    content:"";position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--accent);
+    transition:width .3s cubic-bezier(.2,.7,.2,1);
+  }
+  .home-card:hover::after{width:100%}
+  .hc-index{font-family:var(--font-mono);font-size:9px;letter-spacing:.12em;color:var(--accent)}
+  .home-card h3{font-family:var(--font-tech);font-size:18px;font-weight:600;margin-top:10px}
+  .hc-stat{margin-top:8px;font-family:var(--font-mono);font-size:10.5px;color:var(--muted);line-height:1.6}
+  .hc-arrow{
+    position:absolute;right:14px;bottom:12px;
+    font-family:var(--font-mono);font-size:13px;color:var(--line-strong);transition:.18s;
+  }
+  .home-card:hover .hc-arrow{color:var(--accent);transform:translateX(3px)}
+
+  .home-card.is-main{
+    background:var(--ink);border-color:var(--ink);color:var(--paper);
+    padding:30px 24px 32px;
+  }
+  .home-card.is-main::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);
+  }
+  .home-card.is-main h3{font-size:24px;color:#fff}
+  .home-card.is-main .hc-index{color:#7fbfd8}
+  .home-card.is-main .hc-stat{color:rgba(255,255,255,.55);font-size:11px}
+  .home-card.is-main .hc-arrow{color:rgba(255,255,255,.45)}
+  .home-card.is-main:hover{border-color:var(--accent);box-shadow:0 14px 30px rgba(14,26,34,.22)}
+  .home-card.is-main:hover .hc-arrow{color:#fff}
+
+  .home-foot{
+    margin-top:34px;display:flex;justify-content:center;gap:16px;flex-wrap:wrap;
+    font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;color:var(--muted);
+  }
+
+  /* ============ 年假 ============ */
+  .leave-wrap{padding:38px 0 60px}
+  .leave-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  .leave-head h2{font-family:var(--font-tech);font-size:26px;font-weight:600;margin-top:4px}
+  .leave-grid{display:grid;grid-template-columns:250px minmax(0,1fr);gap:14px;align-items:start}
+  .leave-stat{background:var(--panel);border:1px solid var(--line-strong);padding:14px}
+  .leave-big{font-family:var(--font-tech);font-size:40px;font-weight:600;line-height:1;margin:7px 0 0}
+  .leave-big i{font-style:normal;font-family:var(--font-ui);font-size:13px;color:var(--muted);margin-left:4px}
+  .leave-form{
+    background:var(--panel);border:1px solid var(--line-strong);padding:12px;
+    display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;
+  }
+  .leave-list{margin-top:16px}
+  .leave-item{
+    display:flex;align-items:center;gap:12px;padding:9px 12px;
+    background:var(--panel);border-bottom:1px solid var(--line);
+  }
+  .leave-item:first-child{border-top:1px solid var(--line-strong)}
+  .leave-date{font-family:var(--font-mono);font-size:11px;color:var(--ink-2);width:84px;flex:0 0 auto}
+  .leave-days{font-family:var(--font-tech);font-size:14px;color:var(--accent);width:54px;flex:0 0 auto}
+  .leave-note{flex:1;min-width:0;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .leave-del{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:2px 6px;font-size:12px}
+  .leave-del:hover{color:var(--signal)}
+
   /* ============ 动效 ============ */
   @keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -694,11 +793,18 @@
     .month-cell{min-height:74px;padding:3px}
     .mc-tasks{display:none}
     .mc-sub{font-size:8px}
+    .home-wrap{min-height:auto;padding:28px 0 44px}
+    .home-grid{grid-template-columns:1fr;gap:10px;margin-top:26px}
+    .home-card.is-main{order:-1;padding:24px 18px 26px}
+    .home-hero h1{font-size:30px}
+    .leave-wrap{padding:26px 0 44px}
+    .leave-grid{grid-template-columns:1fr}
   }
 </style>
 </head>
 <body>
 <header class="topbar">
+  <button type="button" class="btn btn-back" id="btnHome" hidden>← 首页</button>
   <div class="brand">
     <svg class="mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
       <polygon class="hexA" points="20,2.5 35.7,11.2 35.7,28.8 20,37.5 4.3,28.8 4.3,11.2" stroke-width="1.1"/>
@@ -707,11 +813,11 @@
     </svg>
     <div>
       <p class="overline">RHINE LAB<span class="sep">/</span>SCHEDULE TERMINAL</p>
-      <h1>日程工作台</h1>
+      <h1>工作台</h1>
     </div>
   </div>
   <div class="today-chip" id="todayChip"></div>
-  <div class="search-wrap">
+  <div class="search-wrap" id="searchWrap">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
     <input id="search" type="search" placeholder="检索任务 / 备注 / 分类" autocomplete="off" />
   </div>
@@ -727,7 +833,7 @@
 
 <div id="banner" class="banner" hidden>LOCAL STORAGE UNAVAILABLE · 当前浏览器禁用了本地存储，任务不会自动保存，请改用 Edge / Chrome 打开。</div>
 
-<main class="layout">
+<main class="layout" id="workScreen">
   <aside class="sidebar">
     <div class="side-head">
       <span class="overline">CALENDAR<span class="sep">/</span>01</span>
@@ -740,6 +846,11 @@
     </div>
     <div class="cal-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
     <div class="cal-grid" id="calGrid"></div>
+    <div class="prio-legend" aria-hidden="true">
+      <span><i style="background:#d9480f"></i>重要</span>
+      <span><i style="background:#1779a4"></i>普通</span>
+      <span><i style="background:#a9bac4"></i>次要</span>
+    </div>
 
     <div class="side-stats" id="sideStats"></div>
     <p class="side-note">
@@ -760,6 +871,9 @@
     <div id="viewRoot"></div>
   </section>
 </main>
+
+<section class="screen" id="homeScreen" hidden></section>
+<section class="screen" id="leaveScreen" hidden></section>
 
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal-card">
@@ -1178,6 +1292,11 @@
   var now = new Date();
   var state = {
     tasks: [],
+    leaves: [],
+    leaveQuota: 15,
+    leaveYear: now.getFullYear(),
+    leaveSeeded: false,
+    screen: 'home',
     selected: todayKey(),
     month: new Date(now.getFullYear(), now.getMonth(), 1),
     view: 'day',
@@ -1229,6 +1348,41 @@
     };
   }
 
+  function normalizeLeave(l) {
+    if (!l || typeof l !== 'object') return null;
+    var date = /^\d{4}-\d{2}-\d{2}$/.test(l.date || '') ? l.date : todayKey();
+    var days = Number(l.days);
+    if (!isFinite(days) || days <= 0) days = 1;
+    days = Math.min(30, Math.max(0.5, Math.round(days * 2) / 2));
+    return {
+      id: String(l.id || uid()),
+      date: date,
+      days: days,
+      note: String(l.note || '').slice(0, 60),
+      createdAt: Number(l.createdAt) || Date.now(),
+      updatedAt: Number(l.updatedAt) || Date.now()
+    };
+  }
+
+  function seedDefaultLeaves() {
+    if (state.leaveSeeded) return;
+    state.leaveSeeded = true;
+    if (state.leaves.length === 0) {
+      state.leaveQuota = 5;
+      ['2026-09-17', '2026-09-18', '2026-09-20'].forEach(function (d) {
+        state.leaves.push({
+          id: 'leave-' + d,
+          date: d,
+          days: 1,
+          note: '年假',
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        });
+      });
+    }
+    save();
+  }
+
   function load() {
     if (!state.storageOK) return;
     try {
@@ -1236,12 +1390,18 @@
       if (!raw) return;
       var data = JSON.parse(raw);
       var list = Array.isArray(data) ? data : (data && data.tasks);
-      if (!Array.isArray(list)) return;
-      state.tasks = list.map(normalize).filter(Boolean);
+      if (Array.isArray(list)) state.tasks = list.map(normalize).filter(Boolean);
+      if (data && Array.isArray(data.leaves)) {
+        state.leaves = data.leaves.map(normalizeLeave).filter(Boolean);
+      }
       if (data && data.prefs) {
         if (CATS[data.prefs.lastCat]) state.lastCat = data.prefs.lastCat;
         if (PRIOS[data.prefs.lastPrio]) state.lastPrio = data.prefs.lastPrio;
         if (REPEATS[data.prefs.lastRepeat]) state.lastRepeat = data.prefs.lastRepeat;
+        if (typeof data.prefs.leaveQuota === 'number' && data.prefs.leaveQuota >= 0) {
+          state.leaveQuota = data.prefs.leaveQuota;
+        }
+        if (data.prefs.leaveSeeded) state.leaveSeeded = true;
       }
     } catch (e) {
       console.warn('读取本地数据失败', e);
@@ -1254,7 +1414,14 @@
       localStorage.setItem(STORE_KEY, JSON.stringify({
         version: 1,
         tasks: state.tasks,
-        prefs: { lastCat: state.lastCat, lastPrio: state.lastPrio, lastRepeat: state.lastRepeat }
+        leaves: state.leaves,
+        prefs: {
+          lastCat: state.lastCat,
+          lastPrio: state.lastPrio,
+          lastRepeat: state.lastRepeat,
+          leaveQuota: state.leaveQuota,
+          leaveSeeded: state.leaveSeeded
+        }
       }));
     } catch (e) {
       state.storageOK = false;
@@ -1364,7 +1531,7 @@
       var isWork = !!WORKDAYS[key];
 
       var dots = pending.slice(0, 3).map(function (t) {
-        return '<i style="background:' + CATS[t.cat].color + '"></i>';
+        return '<i style="background:' + (PRIOS[t.prio] || PRIOS.normal).color + '"></i>';
       }).join('');
       if (!dots && list.length) dots = '<i class="dot-done"></i>';
 
@@ -1372,15 +1539,18 @@
       if (d.getMonth() !== cur.getMonth()) cls.push('is-other');
       if (key === today) cls.push('is-today');
       if (key === state.selected) cls.push('is-selected');
+      if (pending.some(function (t) { return t.prio === 'high'; })) cls.push('has-high');
 
       var sub = '';
       if (holiday) sub = '<span class="sub is-holiday">' + esc(holiday) + '</span>';
+      else if (leaveDaysOn(key)) sub = '<span class="sub is-leave">年假</span>';
       else if (isWork) sub = '<span class="sub is-work">班</span>';
       else if (lunar) sub = '<span class="sub">' + esc(lunar.text) + '</span>';
 
       var label = (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + WEEK_FULL[d.getDay()] +
         (lunar ? ' 农历' + lunar.month + cnLunarDay(lunar.day) : '') +
         (holiday ? ' ' + holiday : '') +
+        (leaveDaysOn(key) ? ' 年假' : '') +
         (isWork ? ' 调休上班' : '') +
         '，共' + list.length + '项任务';
 
@@ -1430,7 +1600,7 @@
   function taskItem(t) {
     var cat = CATS[t.cat] || CATS.other;
     var prio = PRIOS[t.prio] || PRIOS.normal;
-    var barColor = t.prio === 'high' ? prio.color : 'transparent';
+    var barColor = prio.color;
     var tagPrio = t.prio === 'normal' ? '' :
       '<span class="tag" style="color:' + prio.color + '">' + prio.name + '</span>';
     var tagRepeat = (t.repeat && t.repeat !== 'none')
@@ -1481,11 +1651,13 @@
     var lunar = lunarOf(d);
     var holiday = holidayOf(key, d);
     var isWork = !!WORKDAYS[key];
+    var dayLeave = leaveDaysOn(key);
     var lunarLine = '';
-    if (lunar || holiday || isWork) {
+    if (lunar || holiday || isWork || dayLeave) {
       lunarLine = '<p class="day-lunar">' +
         (lunar ? '农历' + lunar.month + cnLunarDay(lunar.day) : '') +
         (holiday ? '<span class="dot-sep">/</span><b class="holiday-name">' + esc(holiday) + '</b>' : '') +
+        (dayLeave ? '<span class="dot-sep">/</span><b class="leave-name">年假 ' + dayLeave + ' 天</b>' : '') +
         (isWork ? '<span class="dot-sep">/</span><b class="work-name">调休上班</b>' : '') +
       '</p>';
     }
@@ -1568,7 +1740,7 @@
       pendingTotal += list.filter(function (t) { return !t.done; }).length;
 
       var items = list.map(function (t) {
-        return '<li class="week-task' + (t.done ? ' is-done' : '') + '" data-id="' + t.id + '">' +
+        return '<li class="week-task' + (t.done ? ' is-done' : '') + '" data-id="' + t.id + '" style="box-shadow:inset 2px 0 0 ' + (PRIOS[t.prio] || PRIOS.normal).color + '">' +
           '<button type="button" class="check sm" data-act="toggle" aria-label="切换完成状态">' + (t.done ? '✓' : '') + '</button>' +
           '<div class="wt-body">' +
             '<span class="wt-title">' + esc(t.title) + '</span>' +
@@ -1716,16 +1888,18 @@
       if (key === state.selected) cls.push('is-selected');
 
       var chips = list.slice(0, 3).map(function (t) {
-        return '<span class="mc-task' + (t.done ? ' is-done' : '') + '">' +
-          '<i style="background:' + CATS[t.cat].color + '"></i>' +
+        var pc = (PRIOS[t.prio] || PRIOS.normal).color;
+        return '<span class="mc-task' + (t.done ? ' is-done' : '') + '" style="border-left-color:' + pc + '">' +
+          '<i style="background:' + pc + '"></i>' +
           esc((t.time ? t.time + ' ' : '') + t.title) + '</span>';
       }).join('');
       if (list.length > 3) chips += '<span class="mc-more">+' + (list.length - 3) + ' 项</span>';
 
-      var sub = holiday || (lunar ? lunar.text : '');
+      var sub = holiday || (leaveDaysOn(key) ? '年假' : (lunar ? lunar.text : ''));
       var badge = isWork
         ? '<span class="mc-badge is-work">班</span>'
-        : (holiday ? '<span class="mc-badge">休</span>' : '');
+        : (holiday ? '<span class="mc-badge">休</span>'
+          : (leaveDaysOn(key) ? '<span class="mc-badge is-leave">年假</span>' : ''));
 
       cells += '<div class="' + cls.join(' ') + '" data-date="' + key + '">' +
         '<div class="mc-top"><span class="mc-num">' + d.getDate() + '</span>' + badge + '</div>' +
@@ -1778,7 +1952,135 @@
     }
   }
 
+  /* ================= 首页 / 年假 ================= */
+  function leaveUsed(year) {
+    var y = String(year);
+    return state.leaves.reduce(function (sum, l) {
+      return l.date.slice(0, 4) === y ? sum + l.days : sum;
+    }, 0);
+  }
+
+  function leaveDaysOn(key) {
+    var n = 0;
+    for (var i = 0; i < state.leaves.length; i++) {
+      if (state.leaves[i].date === key) n += state.leaves[i].days;
+    }
+    return n;
+  }
+
+  function renderHome() {
+    var tKey = todayKey();
+    var d = new Date();
+    var todayPending = tasksOn(tKey).filter(function (t) { return !t.done; }).length;
+    var mon = addDays(d, -((d.getDay() + 6) % 7));
+    var weekPending = 0;
+    for (var i = 0; i < 7; i++) {
+      weekPending += tasksOn(fmtKey(addDays(mon, i))).filter(function (t) { return !t.done; }).length;
+    }
+    var used = leaveUsed(state.leaveYear);
+    var remain = Math.max(0, state.leaveQuota - used);
+    var syncText = sync.enabled ? ('已连接 · ' + syncTimeText(sync.lastSync)) : '未连接 · 数据仅在本机';
+
+    function card(mod, idx, title, stat, extra) {
+      return '<button type="button" class="home-card' + (extra ? ' ' + extra : '') + '" data-module="' + mod + '">' +
+        '<span class="hc-index">' + idx + '</span>' +
+        '<h3>' + title + '</h3>' +
+        '<p class="hc-stat">' + stat + '</p>' +
+        '<span class="hc-arrow">→</span>' +
+      '</button>';
+    }
+
+    els.homeScreen.innerHTML =
+      '<div class="home-wrap">' +
+      '<div class="home-hero">' +
+        '<p class="overline">RHINE LAB<span class="sep">/</span>SCHEDULE TERMINAL</p>' +
+        '<h1>工作台</h1>' +
+        '<p class="home-sub">' + d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日 ' +
+          WEEK_FULL[d.getDay()] + ' · 选择一个模块</p>' +
+      '</div>' +
+      '<div class="home-grid">' +
+        card('leave', '01', '年假安排', '剩余 ' + remain + ' 天 · 全年 ' + state.leaveQuota + ' 天') +
+        card('work', '02', '工作安排', '今日 ' + todayPending + ' 项 · 本周待办 ' + weekPending + ' 项', 'is-main') +
+        card('sync', '03', '同步与备份', syncText) +
+      '</div>' +
+      '<div class="home-foot"><span>LOCAL STORAGE</span><span>数据保存在本机浏览器</span><span>v1.7</span></div>' +
+      '</div>';
+  }
+
+  function renderLeave() {
+    var y = state.leaveYear;
+    var list = state.leaves.filter(function (l) { return l.date.slice(0, 4) === String(y); })
+      .sort(function (a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); });
+    var used = leaveUsed(y);
+    var remain = Math.max(0, state.leaveQuota - used);
+    var pct = state.leaveQuota > 0 ? Math.min(100, Math.round(used / state.leaveQuota * 100)) : 0;
+
+    var rows = list.map(function (l) {
+      return '<div class="leave-item">' +
+        '<span class="leave-date">' + l.date.slice(0, 4) + '/' + l.date.slice(5, 7) + '/' + l.date.slice(8, 10) + '</span>' +
+        '<span class="leave-days">' + l.days + ' 天</span>' +
+        '<span class="leave-note">' + esc(l.note || '—') + '</span>' +
+        '<button type="button" class="leave-del" data-leave-del="' + l.id + '" title="删除">✕</button>' +
+      '</div>';
+    }).join('');
+
+    els.leaveScreen.innerHTML =
+      '<div class="leave-wrap">' +
+      '<div class="leave-head">' +
+        '<div>' +
+          '<p class="overline">LEAVE<span class="sep">/</span><b>年假安排</b></p>' +
+          '<h2>' + y + ' 年</h2>' +
+          '<p class="day-sub">全年额度 ' + state.leaveQuota + ' 天<span class="dot-sep">/</span>已休 ' + used + ' 天</p>' +
+        '</div>' +
+        '<div class="day-nav">' +
+          '<button type="button" class="btn" data-leave-year="-1">‹ 上一年</button>' +
+          '<button type="button" class="btn" data-leave-year="1">下一年 ›</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="leave-grid">' +
+        '<div class="leave-stat">' +
+          '<p class="overline">剩余 / REMAINING</p>' +
+          '<p class="leave-big">' + remain + '<i>天</i></p>' +
+          '<div class="meter"><i style="width:' + pct + '%"></i></div>' +
+          '<p class="stat-foot">已休 ' + used + ' / ' + state.leaveQuota + ' 天</p>' +
+        '</div>' +
+        '<form class="leave-form" id="leaveForm">' +
+          '<label class="mini-field"><span>日期</span><input type="date" id="lvDate" value="' + todayKey() + '" /></label>' +
+          '<label class="mini-field"><span>天数</span><input type="number" id="lvDays" value="1" step="0.5" min="0.5" max="30" /></label>' +
+          '<label class="mini-field" style="flex:1;min-width:150px"><span>备注</span><input type="text" id="lvNote" maxlength="60" placeholder="如：春节延长 / 事假" /></label>' +
+          '<button type="submit" class="btn btn-solid">记录</button>' +
+          '<label class="mini-field"><span>全年额度</span><input type="number" id="lvQuota" value="' + state.leaveQuota + '" step="0.5" min="0" max="60" /></label>' +
+        '</form>' +
+      '</div>' +
+      '<div class="leave-list">' + (rows || '<div class="empty" style="margin-top:16px"><p>这一年还没有年假记录</p></div>') + '</div>' +
+      '</div>';
+  }
+
+  function applyChrome() {
+    var s = state.screen;
+    if (els.btnHome) els.btnHome.hidden = s === 'home';
+    if (els.todayChip) els.todayChip.hidden = s === 'home';
+    if (els.btnVoice) els.btnVoice.hidden = s !== 'work';
+    if (els.btnToday) els.btnToday.hidden = s !== 'work';
+    if (els.btnExport) els.btnExport.hidden = s === 'home';
+    if (els.btnImport) els.btnImport.hidden = s === 'home';
+    if (els.searchWrap) els.searchWrap.hidden = s !== 'work';
+  }
+
+  function setScreen(s) {
+    state.screen = s;
+    render();
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+
   function render() {
+    var s = state.screen;
+    if (els.workScreen) els.workScreen.hidden = s !== 'work';
+    if (els.homeScreen) els.homeScreen.hidden = s !== 'home';
+    if (els.leaveScreen) els.leaveScreen.hidden = s !== 'leave';
+    applyChrome();
+    if (s === 'home') { renderHome(); return; }
+    if (s === 'leave') { renderLeave(); return; }
     renderCalendar();
     renderStats();
     renderContent();
@@ -2054,6 +2356,78 @@
     deleteTask(id);
   }
 
+  /* ---------- 首页 / 年假交互 ---------- */
+  function onHomeClick(e) {
+    var el = e.target.closest ? e.target.closest('[data-module]') : null;
+    if (!el) return;
+    var m = el.getAttribute('data-module');
+    if (m === 'sync') { openSync(); return; }
+    setScreen(m === 'leave' ? 'leave' : 'work');
+  }
+
+  function onLeaveClick(e) {
+    var del = e.target.closest ? e.target.closest('[data-leave-del]') : null;
+    if (del) { deleteLeave(del.getAttribute('data-leave-del')); return; }
+    var y = e.target.closest ? e.target.closest('[data-leave-year]') : null;
+    if (y) {
+      var n = Number(y.getAttribute('data-leave-year')) || 0;
+      state.leaveYear += n;
+      render();
+    }
+  }
+
+  function onLeaveSubmit(e) {
+    if (!e.target || e.target.id !== 'leaveForm') return;
+    e.preventDefault();
+    var dateEl = document.getElementById('lvDate');
+    var daysEl = document.getElementById('lvDays');
+    var noteEl = document.getElementById('lvNote');
+    if (!dateEl || !dateEl.value) return;
+    var days = parseFloat(daysEl && daysEl.value);
+    if (!isFinite(days) || days <= 0) days = 1;
+    days = Math.min(30, Math.max(0.5, Math.round(days * 2) / 2));
+    state.leaves.push({
+      id: uid(),
+      date: dateEl.value,
+      days: days,
+      note: (noteEl && noteEl.value || '').trim().slice(0, 60),
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    });
+    save();
+    render();
+    toast('已记录年假 ' + days + ' 天');
+  }
+
+  function onLeaveChange(e) {
+    var q = e.target;
+    if (!q || q.id !== 'lvQuota') return;
+    var v = parseFloat(q.value);
+    if (!isFinite(v) || v < 0) v = 0;
+    state.leaveQuota = Math.min(60, Math.round(v * 2) / 2);
+    save();
+    render();
+  }
+
+  function deleteLeave(id) {
+    var idx = -1;
+    for (var i = 0; i < state.leaves.length; i++) {
+      if (state.leaves[i].id === id) { idx = i; break; }
+    }
+    if (idx < 0) return;
+    var removed = state.leaves.splice(idx, 1)[0];
+    save();
+    render();
+    toast('已删除年假记录（' + removed.days + ' 天）', {
+      label: '撤回',
+      onClick: function () {
+        state.leaves.splice(Math.min(idx, state.leaves.length), 0, removed);
+        save();
+        render();
+      }
+    });
+  }
+
   /* ---------- 语音输入 ---------- */
   var voice = { rec: null, active: false, done: false };
 
@@ -2224,6 +2598,7 @@
       return;
     }
     if (typing) return;
+    if (state.screen !== 'work') return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
 
     if (e.key === 'ArrowLeft') { shiftDay(state.view === 'week' ? -7 : -1); e.preventDefault(); }
@@ -2240,10 +2615,12 @@
   /* ---------- 导入导出 ---------- */
   function exportData() {
     var payload = {
-      app: '日程工作台',
-      version: 1,
+      app: '工作台',
+      version: 2,
       exportedAt: new Date().toISOString(),
-      tasks: state.tasks
+      tasks: state.tasks,
+      leaves: state.leaves,
+      leaveQuota: state.leaveQuota
     };
     var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
@@ -2254,7 +2631,7 @@
     a.click();
     a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-    toast('已导出 ' + state.tasks.length + ' 条任务');
+    toast('已导出 ' + state.tasks.length + ' 条任务、' + state.leaves.length + ' 条年假');
   }
 
   function mergeTasks(incoming) {
@@ -2271,6 +2648,20 @@
     return { added: added, updated: updated };
   }
 
+  function mergeLeaves(incoming) {
+    var byId = new Map();
+    for (var i = 0; i < state.leaves.length; i++) byId.set(state.leaves[i].id, state.leaves[i]);
+    var added = 0, updated = 0;
+    for (var j = 0; j < incoming.length; j++) {
+      var l = incoming[j];
+      var cur = byId.get(l.id);
+      if (!cur) { byId.set(l.id, l); added++; }
+      else if ((l.updatedAt || 0) > (cur.updatedAt || 0)) { byId.set(l.id, l); updated++; }
+    }
+    state.leaves = Array.from(byId.values());
+    return { added: added, updated: updated };
+  }
+
   function importData(e) {
     var file = e.target.files && e.target.files[0];
     e.target.value = '';
@@ -2284,9 +2675,16 @@
         var tasks = list.map(normalize).filter(Boolean);
         if (!tasks.length) throw new Error('empty');
         var res = mergeTasks(tasks);
+        var lres = { added: 0, updated: 0 };
+        if (data && Array.isArray(data.leaves)) {
+          lres = mergeLeaves(data.leaves.map(normalizeLeave).filter(Boolean));
+        }
+        if (data && typeof data.leaveQuota === 'number' && data.leaveQuota >= 0) {
+          state.leaveQuota = data.leaveQuota;
+        }
         save();
         render();
-        toast('已合并：新增 ' + res.added + ' 条，更新 ' + res.updated + ' 条');
+        toast('已合并：任务 +' + res.added + '，年假 +' + lres.added);
       } catch (err) {
         window.alert('导入失败：这不是有效的备份文件。');
       }
@@ -2340,7 +2738,14 @@
   }
 
   function syncPayload() {
-    return { app: '日程工作台', version: 1, syncedAt: new Date().toISOString(), tasks: state.tasks };
+    return {
+      app: '工作台',
+      version: 2,
+      syncedAt: new Date().toISOString(),
+      tasks: state.tasks,
+      leaves: state.leaves,
+      leaveQuota: state.leaveQuota
+    };
   }
 
   function gh(path, opts) {
@@ -2382,10 +2787,25 @@
   function syncPull() {
     return ensureGist().then(function (id) { return gh('/gists/' + id); }).then(function (g) {
       var f = g.files && g.files[GIST_FILE];
-      if (!f) return { added: 0, updated: 0 };
-      var tasks = parseRemote(f.content || '');
-      if (!tasks) return { added: 0, updated: 0 };
-      return mergeTasks(tasks);
+      if (!f || !f.content) return { changed: false };
+      var data;
+      try { data = JSON.parse(f.content); } catch (e) { return { changed: false }; }
+      var changed = false;
+      var list = Array.isArray(data) ? data : (data && data.tasks);
+      if (Array.isArray(list)) {
+        var r = mergeTasks(list.map(normalize).filter(Boolean));
+        if (r.added || r.updated) changed = true;
+      }
+      if (data && Array.isArray(data.leaves)) {
+        var lr = mergeLeaves(data.leaves.map(normalizeLeave).filter(Boolean));
+        if (lr.added || lr.updated) changed = true;
+      }
+      if (data && typeof data.leaveQuota === 'number' && data.leaveQuota >= 0 &&
+          data.leaveQuota !== state.leaveQuota) {
+        state.leaveQuota = data.leaveQuota;
+        changed = true;
+      }
+      return { changed: changed };
     });
   }
 
@@ -2404,13 +2824,14 @@
     setSyncDot('syncing');
     syncStatus('同步中…');
     return syncPull().then(function (res) {
-      if (res && (res.added || res.updated)) { save(); render(); }
+      if (res && res.changed) { save(); render(); }
       return syncPush();
     }).then(function () {
       sync.lastSync = Date.now();
       saveSync();
       setSyncDot('on');
       syncStatus('已同步 · ' + syncTimeText(sync.lastSync));
+      if (state.screen === 'home') renderHome();
     }).catch(function (err) {
       setSyncDot(sync.enabled ? 'on' : '');
       syncStatus('同步失败：' + (err && err.message ? err.message : '网络错误'), true);
@@ -2426,6 +2847,7 @@
         sync.lastSync = Date.now();
         saveSync();
         setSyncDot('on');
+        if (state.screen === 'home') renderHome();
       }).catch(function () { setSyncDot(''); });
     }, 2500);
   }
@@ -2438,14 +2860,14 @@
       setInterval(function () {
         if (!sync.enabled || sync.busy || document.hidden) return;
         syncPull().then(function (res) {
-          if (res && (res.added || res.updated)) { save(); render(); }
+          if (res && res.changed) { save(); render(); }
         }).catch(function () {});
       }, 120000);
     }
     window.addEventListener('focus', function () {
       if (!sync.enabled || sync.busy || !sync.token) return;
       syncPull().then(function (res) {
-        if (res && (res.added || res.updated)) { save(); render(); }
+        if (res && res.changed) { save(); render(); }
       }).catch(function () {});
     });
   }
@@ -2516,9 +2938,20 @@
     els.syncToken = $('#syncToken');
     els.syncStatus = $('#syncStatus');
     els.syncDot = $('#syncDot');
+    els.workScreen = $('#workScreen');
+    els.homeScreen = $('#homeScreen');
+    els.leaveScreen = $('#leaveScreen');
+    els.btnHome = $('#btnHome');
+    els.todayChip = $('#todayChip');
+    els.btnVoice = $('#btnVoice');
+    els.btnToday = $('#btnToday');
+    els.btnExport = $('#btnExport');
+    els.btnImport = $('#btnImport');
+    els.searchWrap = $('#searchWrap');
 
     state.storageOK = checkStorage();
     load();
+    seedDefaultLeaves();
 
     var t = new Date();
     $('#todayChip').textContent = t.getFullYear() + '年' + (t.getMonth() + 1) + '月' + t.getDate() + '日 ' + WEEK_FULL[t.getDay()];
@@ -2539,6 +2972,11 @@
     els.syncModal.addEventListener('click', function (e) {
       if (e.target === els.syncModal) closeSync();
     });
+    $('#btnHome').addEventListener('click', function () { setScreen('home'); });
+    els.homeScreen.addEventListener('click', onHomeClick);
+    els.leaveScreen.addEventListener('click', onLeaveClick);
+    els.leaveScreen.addEventListener('submit', onLeaveSubmit);
+    els.leaveScreen.addEventListener('change', onLeaveChange);
     els.vCancel.addEventListener('click', voiceClose);
     els.vForm.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -2600,6 +3038,7 @@
       setSyncDot('on');
       syncStatus('已连接 · 上次同步 ' + syncTimeText(sync.lastSync));
     }
+    if (state.screen === 'home') renderHome();
     autoSyncStart();
   }
 
