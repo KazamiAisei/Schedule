@@ -203,6 +203,8 @@
   .cal-day .sub.is-holiday{color:var(--signal);font-weight:600}
   .cal-day .sub.is-work{color:var(--accent);font-weight:600}
   .cal-day .sub.is-leave{color:var(--leave);font-weight:600}
+  .cal-day.off-duty{background:#f7efe3}
+  .cal-day.off-train{background:#e4f1ee}
   .cal-day:hover{background:var(--accent-soft)}
   .cal-day.is-other{opacity:.45}
   .cal-day.has-high .num{color:var(--signal);font-weight:800}
@@ -224,6 +226,7 @@
   .cal-day.is-selected .dots i{background:#fff !important}
   .cal-day .dots{display:flex;gap:2px;height:3px;align-items:center;margin-top:1px}
   .cal-day .dots i{width:3px;height:3px;display:block;background:var(--accent)}
+  .cal-day .dots i.is-done{opacity:.3}
   .cal-day .dots .dot-done{background:var(--line-strong) !important}
 
   .prio-legend{
@@ -275,19 +278,30 @@
 
   /* ============ 内容区 ============ */
   .content{min-width:0}
-  .tabs{display:flex;align-items:stretch;gap:22px;border-bottom:1px solid var(--line-strong)}
-  .tab{
-    position:relative;display:flex;align-items:baseline;gap:6px;
-    border:0;background:transparent;cursor:pointer;
-    padding:2px 1px 8px;color:var(--muted);
-    font-size:13px;transition:color .15s;
+  .tabs{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    background:var(--panel);border:1px solid var(--line-strong);
   }
-  .tab .idx{font-family:var(--font-mono);font-size:9px;letter-spacing:.05em;opacity:.75}
-  .tab:hover{color:var(--ink)}
-  .tab.active{color:var(--ink);font-weight:600}
+  .tab{
+    position:relative;display:flex;align-items:center;justify-content:center;gap:6px;
+    border:0;border-left:1px solid var(--line);background:transparent;cursor:pointer;
+    padding:11px 0;color:var(--muted);
+    font-size:13px;transition:color .15s,background .15s;
+  }
+  .tab:first-child{border-left:0}
+  .tab:hover{color:var(--ink);background:var(--panel-2)}
+  .tab.active{color:var(--ink);font-weight:600;background:var(--panel)}
   .tab.active::after{
     content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);
   }
+
+  .filters{display:flex;gap:6px;margin:0 0 14px}
+  .filter-btn{
+    border:1px solid var(--line-strong);background:var(--panel);color:var(--ink-2);
+    font-size:12px;padding:5px 15px;cursor:pointer;transition:.15s;
+  }
+  .filter-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .filter-btn.active{background:var(--ink);border-color:var(--ink);color:var(--paper)}
 
   .day-head{
     display:flex;align-items:flex-end;justify-content:space-between;gap:18px;
@@ -408,6 +422,7 @@
     border:1px solid currentColor;background:transparent;
   }
   .tag-repeat{border-style:dashed;letter-spacing:.02em}
+  .tag-range{color:var(--muted);border-style:dotted}
   .task-acts{display:flex;gap:1px;opacity:0;transition:opacity .12s;flex:0 0 auto}
   .task:hover .task-acts,.task:focus-within .task-acts{opacity:1}
   .task-acts button{
@@ -500,6 +515,8 @@
     transform:translateX(-110%);
     transition:transform .55s cubic-bezier(.2,.7,.2,1);
   }
+  .month-cell.off-duty{background:#f7efe3}
+  .month-cell.off-train{background:#e4f1ee}
   .month-cell:hover::after{transform:translateX(110%)}
   .month-cell:hover{background:var(--panel-2)}
   .month-cell.is-other{background:var(--panel-2)}
@@ -866,7 +883,7 @@
       <button type="button" class="tab active" data-view="day">日视图</button>
       <button type="button" class="tab" data-view="week">周视图</button>
       <button type="button" class="tab" data-view="month">月视图</button>
-      <button type="button" class="tab" data-view="all">全部待办</button>
+      <button type="button" class="tab" data-view="all">全部</button>
     </nav>
     <div id="viewRoot"></div>
   </section>
@@ -886,6 +903,7 @@
       <div class="field-row">
         <label class="field"><span>日期 / DATE</span><input type="date" id="mDate" /></label>
         <label class="field"><span>时间 / TIME</span><input type="time" id="mTime" /></label>
+        <label class="field"><span>结束 / UNTIL</span><input type="date" id="mEnd" /></label>
       </div>
       <div class="field-row">
         <label class="field"><span>分类 / CATEGORY</span>
@@ -893,6 +911,8 @@
             <option value="course">课程</option>
             <option value="talk">讲解</option>
             <option value="school">校内安排</option>
+            <option value="duty">带班</option>
+            <option value="train">培训</option>
             <option value="other">其他活动</option>
           </select>
         </label>
@@ -979,8 +999,11 @@
     course: { name: '课程', color: '#1779a4' },
     talk:   { name: '讲解', color: '#3f5bd6' },
     school: { name: '校内安排', color: '#2f8446' },
+    duty:   { name: '带班', color: '#b45309' },
+    train:  { name: '培训', color: '#0f766e' },
     other:  { name: '其他活动', color: '#7b8b96' }
   };
+  var OFFSITE = { duty: '#b45309', train: '#0f766e' };
   var LEGACY_CATS = { work: 'school', meet: 'school', study: 'course', life: 'other', other: 'other' };
   var PRIOS = {
     high:   { name: '重要', color: '#d9480f' },
@@ -1105,6 +1128,11 @@
     return (d.getMonth() + 1) + '月' + d.getDate() + '日';
   }
 
+  function fmtShortDate(key) {
+    var d = parseKey(key);
+    return (d.getMonth() + 1) + '/' + d.getDate();
+  }
+
   /* ================= 自然语言 / 语音解析 ================= */
   var WEEK_CHAR = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0, '天': 0 };
 
@@ -1184,6 +1212,17 @@
     else if ((m = text.match(/明天|明日|明儿/))) { rel = addDays(today, 1); text = text.replace(m[0], ' '); }
     else if ((m = text.match(/昨天|昨日/))) { rel = addDays(today, -1); text = text.replace(m[0], ' '); }
     else if ((m = text.match(/今天|今日|今儿/))) { rel = today; text = text.replace(m[0], ' '); }
+
+    var rangeEnd = null;
+    var wr = text.match(/(?:周|星期|礼拜)([一二三四五六日天])\s*(?:到|至|~|-)\s*(?:周|星期|礼拜)?([一二三四五六日天])/);
+    if (wr) {
+      var w1 = WEEK_CHAR[wr[1]], w2 = WEEK_CHAR[wr[2]];
+      var s1 = addDays(mondayOf(today), (w1 + 6) % 7);
+      if (s1 < today) s1 = addDays(s1, 7);
+      rel = s1;
+      rangeEnd = addDays(s1, (w2 - w1 + 7) % 7);
+      text = text.replace(wr[0], ' ');
+    }
 
     if (!exact && !rel && (m = text.match(/(下下|下|这|本)\s*(?:周|星期|礼拜)\s*([一二三四五六日天])|(?:周|星期|礼拜)\s*([一二三四五六日天])/))) {
       var mode = m[1] || '';
@@ -1275,6 +1314,7 @@
     text = text.replace(/[，,。.、；;：:\s]+/g, ' ').trim();
 
     out.date = fmtKey(date);
+    out.endDate = rangeEnd ? fmtKey(rangeEnd) : '';
     out.time = time;
     out.repeat = repeat;
     out.loc = loc;
@@ -1301,6 +1341,7 @@
     month: new Date(now.getFullYear(), now.getMonth(), 1),
     view: 'day',
     query: '',
+    filter: 'all',
     lastCat: 'course',
     lastPrio: 'normal',
     lastRepeat: 'none',
@@ -1330,9 +1371,13 @@
     var cat = t.cat;
     if (!CATS[cat]) cat = LEGACY_CATS[cat] || 'other';
     var repeat = REPEATS[t.repeat] ? t.repeat : 'none';
+    var endDate = /^\d{4}-\d{2}-\d{2}$/.test(t.endDate || '') ? t.endDate : '';
+    if (endDate && endDate <= date) endDate = '';
+    if (repeat !== 'none') endDate = '';
     return {
       id: String(t.id || uid()),
       date: date,
+      endDate: endDate,
       time: time,
       title: title.slice(0, 200),
       cat: cat,
@@ -1433,7 +1478,10 @@
 
   /* ================= 数据查询 ================= */
   function occursOn(t, key) {
-    if (!t.repeat || t.repeat === 'none') return t.date === key;
+    if (!t.repeat || t.repeat === 'none') {
+      var end = t.endDate || t.date;
+      return key >= t.date && key <= end;
+    }
     if (key < t.date) return false;
     if ((t.skipDates || []).indexOf(key) !== -1) return false;
     var s = parseKey(t.date);
@@ -1464,6 +1512,8 @@
       cat: t.cat,
       prio: t.prio,
       note: t.note,
+      loc: t.loc || '',
+      endDate: '',
       repeat: t.repeat,
       done: (t.doneDates || []).indexOf(key) !== -1,
       createdAt: t.createdAt
@@ -1530,16 +1580,19 @@
       var holiday = holidayOf(key, d);
       var isWork = !!WORKDAYS[key];
 
-      var dots = pending.slice(0, 3).map(function (t) {
-        return '<i style="background:' + (PRIOS[t.prio] || PRIOS.normal).color + '"></i>';
+      var dots = list.slice(0, 3).map(function (t) {
+        var c = (PRIOS[t.prio] || PRIOS.normal).color;
+        return '<i class="' + (t.done ? 'is-done' : '') + '" style="background:' + c + '"></i>';
       }).join('');
-      if (!dots && list.length) dots = '<i class="dot-done"></i>';
 
       var cls = ['cal-day'];
       if (d.getMonth() !== cur.getMonth()) cls.push('is-other');
       if (key === today) cls.push('is-today');
       if (key === state.selected) cls.push('is-selected');
       if (pending.some(function (t) { return t.prio === 'high'; })) cls.push('has-high');
+      for (var oi = 0; oi < list.length; oi++) {
+        if (OFFSITE[list[oi].cat]) { cls.push('off-' + list[oi].cat); break; }
+      }
 
       var sub = '';
       if (holiday) sub = '<span class="sub is-holiday">' + esc(holiday) + '</span>';
@@ -1606,6 +1659,9 @@
     var tagRepeat = (t.repeat && t.repeat !== 'none')
       ? '<span class="tag tag-repeat" style="color:var(--accent)">↻ ' + REPEATS[t.repeat].name + '</span>'
       : '';
+    var tagRange = (t.endDate && t.endDate !== t.date)
+      ? '<span class="tag tag-range">' + fmtShortDate(t.date) + '–' + fmtShortDate(t.endDate) + '</span>'
+      : '';
 
     return '<li class="task' + (t.done ? ' is-done' : '') + '" data-id="' + t.id + '">' +
       '<span class="prio-bar" style="background:' + barColor + '"></span>' +
@@ -1619,6 +1675,7 @@
           '<span class="tag" style="color:' + cat.color + '">' + cat.name + '</span>' +
           tagPrio +
           tagRepeat +
+          tagRange +
         '</div>' +
       '</div>' +
       '<div class="task-acts">' +
@@ -1689,7 +1746,8 @@
           '<label class="mini-field"><span>分类</span><select id="fCat" aria-label="分类">' + catOpts + '</select></label>' +
           '<label class="mini-field"><span>优先级</span><select id="fPrio" aria-label="优先级">' + prioOpts + '</select></label>' +
           '<label class="mini-field"><span>重复</span><select id="fRepeat" aria-label="重复">' + repeatOpts + '</select></label>' +
-          '<span class="add-hint">TIME EMPTY = ALL DAY</span>' +
+          '<label class="mini-field"><span>至</span><input type="date" id="fEnd" aria-label="结束日期" style="height:26px;font-size:11.5px;padding:0 6px" /></label>' +
+          '<span class="add-hint">结束日期可选</span>' +
         '</div>' +
       '</form>' +
 
@@ -1777,17 +1835,26 @@
   }
 
   /* ================= 渲染：全部待办 ================= */
+  function displayItem(t) {
+    if (t.repeat && t.repeat !== 'none') {
+      var d = nextPendingOccurrence(t, todayKey());
+      return d ? viewOf(t, d) : null;
+    }
+    return t;
+  }
+
   function renderAll() {
     var today = todayKey();
-    var pending = state.tasks.filter(function (t) { return !t.done; })
-      .map(function (t) {
-        if (!t.repeat || t.repeat === 'none') return t;
-        var d = nextPendingOccurrence(t, today);
-        return d ? viewOf(t, d) : null;
-      })
-      .filter(Boolean)
-      .sort(function (a, b) { return a.date === b.date ? cmpTask(a, b) : (a.date < b.date ? -1 : 1); });
-    var groups = groupByDate(pending);
+    var all = state.tasks.map(displayItem).filter(Boolean);
+    var openCount = all.filter(function (t) { return !t.done; }).length;
+    var doneCount = all.length - openCount;
+
+    var items = all.slice();
+    if (state.filter === 'open') items = items.filter(function (t) { return !t.done; });
+    else if (state.filter === 'done') items = items.filter(function (t) { return t.done; });
+    items.sort(function (a, b) { return a.date === b.date ? cmpTask(a, b) : (a.date < b.date ? -1 : 1); });
+
+    var groups = groupByDate(items);
     var body = '';
 
     groups.forEach(function (entry) {
@@ -1802,21 +1869,34 @@
       '</section>';
     });
 
-    if (!pending.length) {
+    if (!items.length) {
+      var msg = state.filter === 'done' ? '还没有已办结的记录'
+        : (state.filter === 'open' ? '没有未办结的记录' : '还没有任何记录');
       body = '<div class="empty">' +
         '<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1"><polygon points="20,3 35,11.5 35,28.5 20,37 5,28.5 5,11.5"/><path d="M13 20.5 18 25.5 28 14.5" stroke-dasharray="2 2"/></svg>' +
-        '<p>没有未完成的记录</p>' +
+        '<p>' + msg + '</p>' +
         '<div class="chips"><button type="button" class="chip" data-act="go-today">回到今天，安排点事情</button></div></div>';
+    }
+
+    function filterBtn(key, label) {
+      return '<button type="button" class="filter-btn' + (state.filter === key ? ' active' : '') +
+        '" data-filter="' + key + '">' + label + '</button>';
     }
 
     els.viewRoot.innerHTML =
       '<div class="day-head">' +
         '<div class="day-title">' +
-          '<p class="overline">ARCHIVE<span class="sep">/</span><b>ALL PENDING</b></p>' +
-          '<h2>全部待办</h2>' +
-          '<p class="day-sub">共 ' + pending.length + ' 项未完成<span class="dot-sep">/</span>按日期排序</p>' +
+          '<p class="overline">ARCHIVE<span class="sep">/</span><b>ALL RECORDS</b></p>' +
+          '<h2>全部任务</h2>' +
+          '<p class="day-sub">共 ' + all.length + ' 项<span class="dot-sep">/</span>未办结 ' + openCount +
+            '<span class="dot-sep">/</span>已办结 ' + doneCount + '</p>' +
         '</div>' +
         '<div class="day-nav"><button type="button" class="btn" data-act="go-today">回到今天</button></div>' +
+      '</div>' +
+      '<div class="filters">' +
+        filterBtn('all', '全部') +
+        filterBtn('open', '未办结') +
+        filterBtn('done', '已办结') +
       '</div>' + body;
   }
 
@@ -1886,6 +1966,9 @@
       if (d.getMonth() !== m) cls.push('is-other');
       if (key === today) cls.push('is-today');
       if (key === state.selected) cls.push('is-selected');
+      for (var oi = 0; oi < list.length; oi++) {
+        if (OFFSITE[list[oi].cat]) { cls.push('off-' + list[oi].cat); break; }
+      }
 
       var chips = list.slice(0, 3).map(function (t) {
         var pc = (PRIOS[t.prio] || PRIOS.normal).color;
@@ -2247,6 +2330,7 @@
     els.mTitle.value = t.title;
     els.mDate.value = t.date;
     els.mTime.value = t.time;
+    els.mEnd.value = t.endDate || '';
     els.mCat.value = t.cat;
     els.mPrio.value = t.prio;
     els.mRepeat.value = t.repeat || 'none';
@@ -2276,6 +2360,7 @@
     els.mTitle.value = d.title;
     els.mDate.value = d.date;
     els.mTime.value = d.time;
+    els.mEnd.value = d.endDate || '';
     els.mCat.value = d.cat;
     els.mPrio.value = d.prio;
     els.mRepeat.value = d.repeat;
@@ -2309,16 +2394,22 @@
 
     if (state.draftMode) {
       var rRaw = els.mRepeat.value;
+      var dRep = REPEATS[rRaw] ? rRaw : 'none';
+      var dDate = els.mDate.value || todayKey();
+      var dEnd = els.mEnd.value || '';
+      if (dEnd && dEnd <= dDate) dEnd = '';
+      if (dRep !== 'none') dEnd = '';
       state.tasks.push({
         id: uid(),
-        date: els.mDate.value || todayKey(),
+        date: dDate,
+        endDate: dEnd,
         time: els.mTime.value || '',
         title: title.slice(0, 200),
         cat: CATS[els.mCat.value] ? els.mCat.value : 'other',
         prio: PRIOS[els.mPrio.value] ? els.mPrio.value : 'normal',
         note: els.mNote.value.trim().slice(0, 1000),
         loc: els.mLoc.value.trim().slice(0, 60),
-        repeat: REPEATS[rRaw] ? rRaw : 'none',
+        repeat: dRep,
         done: false,
         doneDates: [],
         skipDates: [],
@@ -2334,14 +2425,19 @@
 
     var t = state.tasks.filter(function (x) { return x.id === state.editingId; })[0];
     if (!t) { closeModal(); return; }
+    var eDate = els.mDate.value || todayKey();
+    var eEnd = els.mEnd.value || '';
+    if (eEnd && eEnd <= eDate) eEnd = '';
     t.title = title.slice(0, 200);
-    t.date = els.mDate.value || todayKey();
+    t.date = eDate;
+    t.endDate = eEnd;
     t.time = els.mTime.value || '';
     t.cat = CATS[els.mCat.value] ? els.mCat.value : 'other';
     t.prio = PRIOS[els.mPrio.value] ? els.mPrio.value : 'normal';
     t.note = els.mNote.value.trim().slice(0, 1000);
     t.loc = els.mLoc.value.trim().slice(0, 60);
     t.repeat = REPEATS[els.mRepeat.value] ? els.mRepeat.value : 'none';
+    if (t.repeat !== 'none') t.endDate = '';
     if (t.repeat === 'none') { t.doneDates = []; t.skipDates = []; }
     t.updatedAt = Date.now();
     save();
@@ -2523,10 +2619,14 @@
     var prio = $('#fPrio', form).value;
     var repeatRaw = $('#fRepeat', form).value;
     var repeat = REPEATS[repeatRaw] ? repeatRaw : 'none';
+    var endRaw = $('#fEnd', form).value || '';
+    if (endRaw && endRaw <= state.selected) endRaw = '';
+    if (repeat !== 'none') endRaw = '';
 
     state.tasks.push({
       id: uid(),
       date: state.selected,
+      endDate: endRaw,
       time: time,
       title: title.slice(0, 200),
       cat: CATS[cat] ? cat : 'other',
@@ -2558,12 +2658,17 @@
       return;
     }
 
-    var target = e.target.closest ? e.target.closest('[data-act],[data-nav],[data-weeknav],[data-monthnav],[data-suggest]') : null;
+    var target = e.target.closest ? e.target.closest('[data-act],[data-nav],[data-weeknav],[data-monthnav],[data-suggest],[data-filter]') : null;
     if (!target) return;
 
     if (target.hasAttribute('data-suggest')) {
       var input = document.getElementById('fTitle');
       if (input) { input.value = target.getAttribute('data-suggest'); input.focus(); }
+      return;
+    }
+    if (target.hasAttribute('data-filter')) {
+      state.filter = target.getAttribute('data-filter');
+      renderContent();
       return;
     }
     if (target.hasAttribute('data-nav')) { shiftDay(Number(target.getAttribute('data-nav'))); return; }
@@ -2918,6 +3023,7 @@
     els.mTitle = $('#mTitle');
     els.mDate = $('#mDate');
     els.mTime = $('#mTime');
+    els.mEnd = $('#mEnd');
     els.mCat = $('#mCat');
     els.mPrio = $('#mPrio');
     els.mRepeat = $('#mRepeat');
